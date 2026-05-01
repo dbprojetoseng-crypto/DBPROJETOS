@@ -1,0 +1,158 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile and workspace linkage",
+      "type": "object",
+      "properties": {
+        "workspaceId": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "planejador", "contratada"] },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email"]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "description": "Enterprise workspace container",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "plan": { "type": "string", "enum": ["trial", "pro", "enterprise"] },
+        "maxObras": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "Member": {
+      "title": "Workspace Member",
+      "description": "Member association within a workspace",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "planejador", "contratada"] },
+        "area": { "type": "string" },
+        "empresa": { "type": "string" },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "invitedBy": { "type": "string" }
+      },
+      "required": ["uid", "role"]
+    },
+    "Invite": {
+      "title": "Workspace Invite",
+      "description": "Pending member invitations",
+      "type": "object",
+      "properties": {
+        "workspaceId": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "planejador", "contratada"] },
+        "area": { "type": "string" },
+        "empresa": { "type": "string" },
+        "token": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "used": { "type": "boolean" },
+        "usedBy": { "type": "string" },
+        "usedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceId", "email", "token"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Client company",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string" },
+        "segment": { "type": "string" },
+        "city": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "userId": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientName", "workspaceId"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Engineering project",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "clientId": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "area": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "userId": { "type": "string" },
+        "importedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "clientId", "workspaceId"]
+    },
+    "BMS": {
+      "title": "Boletim de Medição de Serviços",
+      "description": "Monthly service measurement bulletin",
+      "type": "object",
+      "properties": {
+        "numero": { "type": "string" },
+        "revisao": { "type": "number" },
+        "mes": { "type": "string" },
+        "ano": { "type": "number" },
+        "projectId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "contratada": { "type": "string" },
+        "contratante": { "type": "string" },
+        "obra": { "type": "string" },
+        "contrato": { "type": "string" },
+        "status": { "type": "string", "enum": ["rascunho", "enviado", "em_revisao", "aprovado", "pago"] },
+        "itens": { "type": "array" },
+        "valorBrutoTotal": { "type": "number" },
+        "observacoesContratada": { "type": "string" },
+        "observacoesContratante": { "type": "string" },
+        "historico": { "type": "array" },
+        "criadoEm": { "type": "string", "format": "date-time" },
+        "enviadoEm": { "type": "string", "format": "date-time" },
+        "aprovadoEm": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": "Workspace",
+      "description": "Workspaces"
+    },
+    "/workspaces/{workspaceId}/members/{userId}": {
+      "schema": "Member",
+      "description": "Workspace members"
+    },
+    "/invites/{inviteId}": {
+      "schema": "Invite",
+      "description": "Workspace invites"
+    },
+    "/clients/{clientId}": {
+      "schema": "Client",
+      "description": "Clients linked to workspaces"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Projects linked to workspaces"
+    },
+    "/projects/{projectId}/items/{itemId}": {
+      "schema": { "type": "object" },
+      "description": "Generic project items (tasks, members, etc)"
+    },
+    "/projects/{projectId}/bms/{bmsId}": {
+      "schema": "BMS",
+      "description": "Measurement bulletins"
+    }
+  }
+}

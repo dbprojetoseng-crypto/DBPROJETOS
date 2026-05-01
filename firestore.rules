@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isWorkspaceMember(workspaceId) {
+      return isAuthenticated() && exists(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+    }
+
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /workspaces/{workspaceId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isWorkspaceMember(workspaceId);
+
+      match /members/{memberId} {
+        allow read: if isWorkspaceMember(workspaceId);
+        allow create, update: if isAuthenticated() && 
+          (memberId == request.auth.uid || 
+           get(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid)).data.role == 'admin');
+        allow delete: if isAuthenticated() &&
+          get(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid)).data.role == 'admin';
+      }
+    }
+
+    match /invites/{inviteId} {
+      allow read, create, update: if isAuthenticated();
+    }
+
+    match /clients/{clientId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && (
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.userId == request.auth.uid ||
+        (resource.data.workspaceId != null && isWorkspaceMember(resource.data.workspaceId))
+      );
+      allow update, delete: if isAuthenticated() && (
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.userId == request.auth.uid
+      );
+    }
+
+    match /projects/{projectId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && (
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.userId == request.auth.uid ||
+        (resource.data.workspaceId != null && isWorkspaceMember(resource.data.workspaceId))
+      );
+      allow update, delete: if isAuthenticated() && (
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.userId == request.auth.uid
+      );
+      
+      match /{allSubcollections=**} {
+        allow read, write: if isAuthenticated() && (
+          // Fast check based on field in the sub-document
+          (resource != null && resource.data.workspaceId != null && isWorkspaceMember(resource.data.workspaceId)) ||
+          // Fallback check on parent for documents without workspaceId field
+          (get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid) ||
+          (get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid) ||
+          (get(/databases/$(database)/documents/projects/$(projectId)).data.workspaceId != null && isWorkspaceMember(get(/databases/$(database)/documents/projects/$(projectId)).data.workspaceId))
+        );
+      }
+    }
+  }
+}
